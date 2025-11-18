@@ -1,0 +1,125 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}{{ site.name }} - Retention Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ site.name }}</h1>
+    <a href="/admin/tracking/site/{{ site.id }}/change/" class="btn btn-outline-secondary">
+        <i class="bi bi-gear"></i> Edit Site
+    </a>
+</div>
+
+<div class="alert alert-info">
+    <h6><i class="bi bi-code-square"></i> Tracking Pixel Code:</h6>
+    <pre class="mb-0"><code>&lt;script src="http://{{ request.get_host }}/static/tracking/pixel.js" data-site-key="{{ site.site_key }}"&gt;&lt;/script&gt;</code></pre>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Visitors</h6>
+                <h2 class="card-title">{{ total_visitors }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Identified</h6>
+                <h2 class="card-title">{{ identified_visitors }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Contacts</h6>
+                <h2 class="card-title">{{ total_contacts }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Events</h6>
+                <h2 class="card-title">{{ total_events }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Event Breakdown</h5></div>
+            <div class="card-body">
+                {% if event_breakdown %}
+                    <table class="table table-sm">
+                        {% for event in event_breakdown %}
+                        <tr>
+                            <td><span class="badge bg-primary">{{ event.event_type }}</span></td>
+                            <td class="text-end">{{ event.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <p class="text-muted">No events yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">7-Day Event Trend</h5></div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    {% for day in daily_events %}
+                    <tr>
+                        <td>{{ day.date }}</td>
+                        <td class="text-end">{{ day.count }} events</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Recent Events</h5></div>
+            <div class="card-body">
+                {% if recent_events %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Page</th>
+                                    <th>Visitor</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in recent_events %}
+                                <tr>
+                                    <td><span class="badge bg-primary">{{ event.event_type }}</span></td>
+                                    <td>{{ event.page_title|default:event.page_url|truncatechars:50 }}</td>
+                                    <td><a href="{% url 'dashboard:visitor-detail' event.visitor.id %}">{{ event.visitor.visitor_id|truncatechars:15 }}</a></td>
+                                    <td>{{ event.timestamp|date:"M d, H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No events yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

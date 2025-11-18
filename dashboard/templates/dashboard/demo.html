@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo E-commerce Site - Test Retention Tracking</title>
+
+    <!-- Bootstrap CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Retention Tracking Pixel -->
+    {% if has_site %}
+    <script src="{{ request.scheme }}://{{ request.get_host }}/static/tracking/pixel.js" data-site-key="{{ site_key }}"></script>
+    {% endif %}
+
+    <style>
+        .product-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+        }
+        .alert-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 9999;
+            margin: 0;
+            border-radius: 0;
+        }
+        .content-wrapper {
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+    {% if not has_site %}
+    <!-- Alert if no site configured -->
+    <div class="alert alert-warning alert-banner text-center" role="alert">
+        <strong>No site configured!</strong>
+        Please <a href="/admin/tracking/site/add/" class="alert-link">create a site</a> in the admin panel first to enable tracking.
+        <a href="/dashboard/" class="btn btn-sm btn-outline-warning ms-3">Go to Dashboard</a>
+    </div>
+    {% else %}
+    <!-- Info banner -->
+    <div class="alert alert-info alert-banner text-center" role="alert">
+        <strong>Demo Mode Active!</strong> All interactions are being tracked.
+        <a href="/dashboard/" class="alert-link">View Dashboard</a> to see the data.
+        <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <div class="content-wrapper">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="/demo/">Demo Shop</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#products">Products</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="cartLink">Cart (<span id="cartCount">0</span>)</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard/">Dashboard</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="container text-center">
+                <h1 class="display-4">Welcome to Demo Shop</h1>
+                <p class="lead">This is a test page for Retention Analytics tracking</p>
+                <p class="text-white-50">All interactions on this page are being tracked</p>
+                {% if has_site %}
+                <p class="text-white-50"><small>Tracking with site key: <code>{{ site_key }}</code></small></p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div class="container my-5" id="products">
+            <h2 class="mb-4">Featured Products</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card product-card" onclick="addToCart('prod-1', 'Wireless Headphones', 79.99)">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Wireless Headphones</h5>
+                            <p class="card-text text-muted">Premium sound quality</p>
+                            <h4 class="text-primary">$79.99</h4>
+                            <button class="btn btn-primary">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card product-card" onclick="addToCart('prod-2', 'Smart Watch', 199.99)">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Smart Watch</h5>
+                            <p class="card-text text-muted">Track your fitness</p>
+                            <h4 class="text-primary">$199.99</h4>
+                            <button class="btn btn-primary">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card product-card" onclick="addToCart('prod-3', 'Laptop Bag', 49.99)">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Laptop Bag</h5>
+                            <p class="card-text text-muted">Stylish and durable</p>
+                            <h4 class="text-primary">$49.99</h4>
+                            <button class="btn btn-primary">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Newsletter Section -->
+        <div class="bg-light py-5">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title text-center mb-4">Subscribe to Our Newsletter</h4>
+                                <p class="text-muted text-center"><small>This will trigger identity resolution!</small></p>
+                                <form id="newsletterForm" onsubmit="handleNewsletter(event)">
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" id="name" placeholder="Your Name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="email" class="form-control" id="email" placeholder="Your Email" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="tel" class="form-control" id="phone" placeholder="Phone (optional)">
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">Subscribe</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Section -->
+        <div class="container my-5">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Shopping Cart</h4>
+                </div>
+                <div class="card-body">
+                    <div id="cartItems" class="mb-3">
+                        <p class="text-muted">Your cart is empty</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5>Total: <span id="cartTotal">$0.00</span></h5>
+                        <button id="checkoutBtn" class="btn btn-success" onclick="handleCheckout()" disabled>
+                            Proceed to Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-dark text-white py-4 mt-5">
+            <div class="container text-center">
+                <p class="mb-0">&copy; 2024 Demo Shop - Testing Retention Analytics</p>
+                <p class="text-white-50 small">
+                    Check your Retention dashboard at
+                    <a href="/dashboard/" class="text-white">localhost:8000/dashboard</a>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Shopping cart state
+        let cart = [];
+        let cartTotal = 0;
+
+        // Add to cart function
+        function addToCart(productId, productName, price) {
+            // Add to cart array
+            const item = { id: productId, name: productName, price: price };
+            cart.push(item);
+            cartTotal += price;
+
+            {% if has_site %}
+            // Track the event
+            RetentionTracker.trackCartAdd({
+                product_id: productId,
+                product_name: productName,
+                price: price
+            });
+            {% endif %}
+
+            // Update UI
+            updateCartUI();
+
+            // Show feedback
+            alert(`Added ${productName} to cart!`);
+        }
+
+        // Update cart UI
+        function updateCartUI() {
+            const cartCount = document.getElementById('cartCount');
+            const cartItems = document.getElementById('cartItems');
+            const cartTotalEl = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+
+            cartCount.textContent = cart.length;
+            cartTotalEl.textContent = `$${cartTotal.toFixed(2)}`;
+
+            if (cart.length > 0) {
+                checkoutBtn.disabled = false;
+                let itemsHTML = '<ul class="list-group">';
+                cart.forEach(item => {
+                    itemsHTML += `
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>${item.name}</span>
+                            <span class="text-primary">$${item.price.toFixed(2)}</span>
+                        </li>
+                    `;
+                });
+                itemsHTML += '</ul>';
+                cartItems.innerHTML = itemsHTML;
+
+                {% if has_site %}
+                // Track cart view
+                RetentionTracker.trackCartView(cart);
+                {% endif %}
+            } else {
+                checkoutBtn.disabled = true;
+                cartItems.innerHTML = '<p class="text-muted">Your cart is empty</p>';
+            }
+        }
+
+        // Handle newsletter form
+        function handleNewsletter(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            {% if has_site %}
+            // This is the KEY part - identity resolution!
+            // When user submits their email, we identify them
+            RetentionTracker.identify(email, {
+                name: name,
+                phone: phone || null,
+                source: 'newsletter_subscription'
+            });
+
+            // Also track the form submission event
+            RetentionTracker.trackFormSubmit('newsletter', {
+                email: email,
+                name: name,
+                phone: phone
+            });
+
+            alert('Thank you for subscribing! Your visitor is now identified in the system.\n\nCheck the dashboard to see your contact profile!');
+            {% else %}
+            alert('Newsletter submitted, but tracking is disabled (no site configured).');
+            {% endif %}
+
+            document.getElementById('newsletterForm').reset();
+        }
+
+        // Handle checkout
+        function handleCheckout() {
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+
+            {% if has_site %}
+            // Track checkout start
+            RetentionTracker.trackCheckoutStart({
+                items: cart,
+                total: cartTotal,
+                item_count: cart.length
+            });
+            {% endif %}
+
+            // Simulate order completion
+            const orderId = 'ORD-' + Date.now();
+
+            {% if has_site %}
+            // Track purchase
+            RetentionTracker.trackPurchase({
+                order_id: orderId,
+                total: cartTotal,
+                currency: 'USD',
+                items: cart,
+                item_count: cart.length
+            });
+            {% endif %}
+
+            alert(`Order placed successfully!\nOrder ID: ${orderId}\nTotal: $${cartTotal.toFixed(2)}\n\nCheck the dashboard to see this purchase event!`);
+
+            // Clear cart
+            cart = [];
+            cartTotal = 0;
+            updateCartUI();
+        }
+
+        // Initialize
+        {% if has_site %}
+        console.log('Demo shop loaded. RetentionTracker is ready!');
+        console.log('Visitor ID:', RetentionTracker.getVisitorId());
+        console.log('Session ID:', RetentionTracker.getSessionId());
+        console.log('Site Key:', '{{ site_key }}');
+        {% else %}
+        console.log('Demo shop loaded. Tracking is disabled (no site configured).');
+        {% endif %}
+    </script>
+</body>
+</html>

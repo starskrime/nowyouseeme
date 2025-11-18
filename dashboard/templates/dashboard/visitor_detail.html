@@ -1,0 +1,239 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Visitor {{ visitor.visitor_id }} - Retention Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Visitor Details</h1>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Visitor Information</h5></div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Visitor ID:</th>
+                        <td><code>{{ visitor.visitor_id }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Site:</th>
+                        <td><a href="{% url 'dashboard:site-detail' visitor.site.id %}">{{ visitor.site.name }}</a></td>
+                    </tr>
+                    <tr>
+                        <th>First Seen:</th>
+                        <td>{{ visitor.first_seen|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Last Seen:</th>
+                        <td>{{ visitor.last_seen|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>IP Address:</th>
+                        <td>{{ visitor.ip_address|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>User Agent:</th>
+                        <td><small>{{ visitor.user_agent|default:"-"|truncatechars:80 }}</small></td>
+                    </tr>
+                    <tr>
+                        <th>Browser:</th>
+                        <td>{{ visitor.browser_name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Operating System:</th>
+                        <td>{{ visitor.os_name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Device Type:</th>
+                        <td>{{ visitor.device_type|default:"-"|capfirst }}</td>
+                    </tr>
+                    <tr>
+                        <th>Screen Resolution:</th>
+                        <td>{{ visitor.screen_resolution|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Timezone:</th>
+                        <td>{{ visitor.timezone|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Language:</th>
+                        <td>{{ visitor.language|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Identified:</th>
+                        <td>
+                            {% if visitor.is_identified %}
+                                <span class="badge bg-success">Yes</span>
+                                {% if visitor.matched_via %}
+                                    <br><small class="text-muted"><strong>Matched via:</strong>
+                                    {% if visitor.matched_via == 'browser_fingerprint' %}
+                                        Browser Fingerprint
+                                    {% elif visitor.matched_via == 'ip_address' %}
+                                        IP Address
+                                    {% elif visitor.matched_via == 'user_agent' %}
+                                        User Agent
+                                    {% elif visitor.matched_via == 'email' %}
+                                        Email
+                                    {% else %}
+                                        {{ visitor.matched_via }}
+                                    {% endif %}
+                                    </small>
+                                    <br><small class="text-muted">
+                                        {% if visitor.matched_via == 'browser_fingerprint' %}
+                                            {% if contact and contact.extra_data.match_details %}
+                                                <strong>Details:</strong> {{ contact.extra_data.match_details.browser }} on {{ contact.extra_data.match_details.os }} ({{ contact.extra_data.match_details.device }}, {{ contact.extra_data.match_details.resolution }})
+                                            {% else %}
+                                                <strong>Details:</strong> {{ visitor.browser_name|default:"Unknown" }} on {{ visitor.os_name|default:"Unknown" }} ({{ visitor.device_type|default:"unknown" }}, {{ visitor.screen_resolution|default:"unknown" }})
+                                            {% endif %}
+                                        {% elif visitor.matched_via == 'ip_address' %}
+                                            {% if contact and contact.extra_data.match_details %}
+                                                <strong>IP:</strong> {{ contact.extra_data.match_details.ip }}
+                                            {% else %}
+                                                <strong>IP:</strong> {{ visitor.ip_address }}
+                                            {% endif %}
+                                        {% elif visitor.matched_via == 'user_agent' %}
+                                            {% if contact and contact.extra_data.match_details %}
+                                                <strong>User Agent:</strong> {{ contact.extra_data.match_details.user_agent|truncatechars:60 }}
+                                            {% else %}
+                                                <strong>User Agent:</strong> {{ visitor.user_agent|truncatechars:60 }}
+                                            {% endif %}
+                                        {% elif visitor.matched_via == 'email' %}
+                                            <strong>Email:</strong> {{ contact.email }}
+                                        {% endif %}
+                                    </small>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Total Events:</th>
+                        <td>{{ event_count }}</td>
+                    </tr>
+                </table>
+
+                {% if visitor.utm_source or visitor.utm_medium or visitor.utm_campaign %}
+                <hr>
+                <h6>First-Touch Attribution (UTM):</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <th>Source:</th>
+                        <td>{{ visitor.utm_source|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Medium:</th>
+                        <td>{{ visitor.utm_medium|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Campaign:</th>
+                        <td>{{ visitor.utm_campaign|default:"-" }}</td>
+                    </tr>
+                    {% if visitor.utm_term %}
+                    <tr>
+                        <th>Term:</th>
+                        <td>{{ visitor.utm_term }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if visitor.utm_content %}
+                    <tr>
+                        <th>Content:</th>
+                        <td>{{ visitor.utm_content }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        {% if contact %}
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Identified As</h5></div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ contact.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Name:</th>
+                        <td>{{ contact.name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ contact.phone|default:"-" }}</td>
+                    </tr>
+                </table>
+                <a href="{% url 'dashboard:contact-detail' contact.id %}" class="btn btn-sm btn-primary">View Contact Profile</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Anonymous Visitor</h5></div>
+            <div class="card-body">
+                <p class="text-muted">This visitor has not been identified yet.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">Event History (Latest {{ events|length }})</h5></div>
+    <div class="card-body">
+        {% if events %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Details</th>
+                            <th>Page</th>
+                            <th>Session</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">{{ event.event_type }}</span>
+                                {% if event.event_type == 'custom' and event.event_data.event_name %}
+                                    <br><small class="text-muted">{{ event.event_data.event_name }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if event.event_type == 'custom' and event.event_data.event_name == 'click' and event.event_data.click_data %}
+                                    <strong>Clicked:</strong> "{{ event.event_data.click_data.element_text|default:"[no text]"|truncatechars:40 }}"<br>
+                                    <small class="text-muted">
+                                        {{ event.event_data.click_data.element_tag }}
+                                        {% if event.event_data.click_data.element_id %}#{{ event.event_data.click_data.element_id }}{% endif %}
+                                        {% if event.event_data.click_data.href %}<br>→ {{ event.event_data.click_data.href|truncatechars:50 }}{% endif %}
+                                        {% if event.event_data.click_data.parent_context.container_text %}
+                                            <br><span class="badge bg-secondary" title="{{ event.event_data.click_data.parent_context.container_text }}">Context: {{ event.event_data.click_data.parent_context.container_text|truncatechars:60 }}</span>
+                                        {% endif %}
+                                    </small>
+                                {% elif event.event_name %}
+                                    {{ event.event_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ event.page_title|default:event.page_url|truncatechars:40 }}</td>
+                            <td><small>{{ event.session_id|truncatechars:12 }}</small></td>
+                            <td><small>{{ event.timestamp|date:"M d, H:i:s" }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No events recorded.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

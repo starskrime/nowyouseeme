@@ -1,0 +1,474 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Dashboard - Retention Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard Overview</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/demo/" target="_blank" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-cart"></i> Try Demo Shop
+        </a>
+    </div>
+</div>
+
+{% if total_visitors == 0 %}
+<div class="alert alert-info" role="alert">
+    <h5 class="alert-heading"><i class="bi bi-info-circle"></i> Get Started!</h5>
+    <p>You haven't tracked any visitors yet. Here's how to get started:</p>
+    <ol class="mb-0">
+        <li>Make sure you have a <a href="/admin/tracking/site/" class="alert-link">Site configured</a></li>
+        <li><a href="/demo/" target="_blank" class="alert-link">Try the Demo Shop</a> to generate test data</li>
+        <li>Embed the tracking pixel on your own website</li>
+    </ol>
+</div>
+{% endif %}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Sites</h6>
+                <h2 class="card-title">{{ total_sites }}</h2>
+                <p class="card-text text-muted mb-0"><small>Active tracking sites</small></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Visitors</h6>
+                <h2 class="card-title">{{ total_visitors|default:"0" }}</h2>
+                <p class="card-text text-success mb-0"><small>+{{ today_visitors }} today</small></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Identified Contacts</h6>
+                <h2 class="card-title">{{ total_contacts|default:"0" }}</h2>
+                <p class="card-text text-warning mb-0"><small>+{{ today_contacts }} today</small></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Events</h6>
+                <h2 class="card-title">{{ total_events|default:"0" }}</h2>
+                <p class="card-text text-info mb-0"><small>+{{ today_events }} today</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Analytics Charts Row -->
+    <!-- Events Over Time Chart (Left Side - 75% width) -->
+    <div class="col-md-9 mb-4">
+        <div class="card" style="height: 810px;">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Events Over Time (Last 7 Days)</h5>
+            </div>
+            <div class="card-body">
+                {% if total_events > 0 %}
+                    <canvas id="eventsOverTimeChart"></canvas>
+                {% else %}
+                    <p class="text-muted">No events tracked yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Donut Charts (Right Side - 25% width) -->
+    <div class="col-md-3 mb-4">
+        <!-- Event Types Distribution -->
+        <div class="card mb-3" style="height: 395px;">
+            <div class="card-header py-2">
+                <h6 class="mb-0" style="font-size: 0.9rem;">Event Types</h6>
+            </div>
+            <div class="card-body p-2 d-flex align-items-center justify-content-center">
+                {% if event_stats %}
+                    <div style="width: 100%; max-width: 340px;">
+                        <canvas id="eventTypeChart"></canvas>
+                    </div>
+                {% else %}
+                    <p class="text-muted small">No events tracked yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Identified vs Anonymous Visitors -->
+        <div class="card" style="height: 395px;">
+            <div class="card-header py-2">
+                <h6 class="mb-0" style="font-size: 0.9rem;">Visitor Types</h6>
+            </div>
+            <div class="card-body p-2">
+                {% if total_visitors > 0 %}
+                    <div style="width: 100%; max-width: 340px; margin: 0 auto;">
+                        <canvas id="visitorTypeChart"></canvas>
+                    </div>
+                    <div class="row text-center mt-3">
+                        <div class="col-6">
+                            <small class="text-muted d-block" style="font-size: 0.8rem;">Identified</small>
+                            <h5 class="text-success mb-0">{{ identified_visitors }}</h5>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block" style="font-size: 0.8rem;">Anonymous</small>
+                            <h5 class="text-secondary mb-0">{{ anonymous_visitors }}</h5>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-muted small">No visitors tracked yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Event Breakdown</h5>
+            </div>
+            <div class="card-body">
+                {% if event_stats %}
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Event Type</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in event_stats %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-event bg-primary">{{ stat.event_type }}</span>
+                                </td>
+                                <td class="text-end">{{ stat.count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-muted">No events tracked yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Sites</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_sites %}
+                    <ul class="list-group list-group-flush">
+                        {% for site in recent_sites %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{% url 'dashboard:site-detail' site.id %}">{{ site.name }}</a>
+                            <span class="badge bg-secondary">{{ site.domain }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No sites configured yet.</p>
+                    <a href="/admin/tracking/site/add/" class="btn btn-primary btn-sm">Add Your First Site</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Contacts</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_contacts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Site</th>
+                                    <th>First Identified</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for contact in recent_contacts %}
+                                <tr>
+                                    <td>{{ contact.email }}</td>
+                                    <td>{{ contact.name|default:"-" }}</td>
+                                    <td><span class="badge bg-info">{{ contact.site.name }}</span></td>
+                                    <td>{{ contact.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'dashboard:contact-detail' contact.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No contacts identified yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Events</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_events %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Page URL</th>
+                                    <th>Visitor</th>
+                                    <th>Site</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in recent_events %}
+                                <tr>
+                                    <td>
+                                        <span class="badge
+                                            {% if event.event_type == 'page_view' %}bg-primary
+                                            {% elif event.event_type == 'cart_add' %}bg-success
+                                            {% elif event.event_type == 'cart_view' %}bg-info
+                                            {% elif event.event_type == 'checkout_start' %}bg-warning
+                                            {% elif event.event_type == 'purchase' %}bg-danger
+                                            {% else %}bg-secondary
+                                            {% endif %}">
+                                            {{ event.event_type }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; display: inline-block;">
+                                            {{ event.page_url|truncatechars:50 }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'dashboard:visitor-detail' event.visitor.id %}" class="text-decoration-none">
+                                            <small>{{ event.visitor.visitor_id|truncatechars:15 }}</small>
+                                            {% if event.visitor.is_identified %}
+                                                <i class="bi bi-check-circle-fill text-success" title="Identified As: {{ event.visitor.contact.email }}"></i>
+                                            {% else %}
+                                                <i class="bi bi-question-circle text-muted" title="Anonymous Visitor"></i>
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                    <td><span class="badge bg-info">{{ event.site.name }}</span></td>
+                                    <td><small class="text-muted">{{ event.timestamp|timesince }} ago</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No events tracked yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Chart.js configuration
+    Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial';
+    Chart.defaults.color = '#666';
+
+    // Color palette
+    const colors = {
+        primary: '#0d6efd',
+        success: '#198754',
+        warning: '#ffc107',
+        danger: '#dc3545',
+        info: '#0dcaf0',
+        secondary: '#6c757d',
+        purple: '#6f42c1',
+        pink: '#d63384',
+        orange: '#fd7e14',
+        teal: '#20c997',
+    };
+
+    const colorArray = Object.values(colors);
+
+    {% if event_stats %}
+    // Event Type Distribution Chart (Doughnut)
+    const eventTypeCtx = document.getElementById('eventTypeChart');
+    if (eventTypeCtx) {
+        new Chart(eventTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ event_type_labels_json|safe }},
+                datasets: [{
+                    label: 'Events',
+                    data: {{ event_type_counts_json|safe }},
+                    backgroundColor: colorArray,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 8,
+                            font: {
+                                size: 10
+                            },
+                            boxWidth: 12
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    {% if total_visitors > 0 %}
+    // Visitor Type Chart (Pie)
+    const visitorTypeCtx = document.getElementById('visitorTypeChart');
+    if (visitorTypeCtx) {
+        new Chart(visitorTypeCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Identified', 'Anonymous'],
+                datasets: [{
+                    label: 'Visitors',
+                    data: [{{ identified_visitors }}, {{ anonymous_visitors }}],
+                    backgroundColor: [colors.success, colors.secondary],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 8,
+                            font: {
+                                size: 10
+                            },
+                            boxWidth: 12
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = {{ total_visitors }};
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    {% if total_events > 0 %}
+    // Events Over Time Chart (Line)
+    const eventsOverTimeCtx = document.getElementById('eventsOverTimeChart');
+    if (eventsOverTimeCtx) {
+        new Chart(eventsOverTimeCtx, {
+            type: 'line',
+            data: {
+                labels: {{ daily_event_labels_json|safe }},
+                datasets: [{
+                    label: 'Events',
+                    data: {{ daily_event_counts_json|safe }},
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primary + '20',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: colors.primary,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        },
+                        grid: {
+                            color: '#e9ecef'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+    }
+    {% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,6 @@
+email,first_name,last_name,phone,ip_address,company,job_title,linkedin_url,facebook_url,location
+ASMAZ.doe@example.com,ALMAA,Doe,+1-555-0100,127.0.0.1,Tech Innovations Inc,Senior Developer,https://linkedin.com/in/johndoe,https://facebook.com/johndoe,"San Francisco, CA"
+jane.smith@example.com,Jane,Smith,+1-555-0101,192.168.1.101,Digital Solutions LLC,Product Manager,https://linkedin.com/in/janesmith,https://facebook.com/janesmith,"New York, NY"
+mike.johnson@example.com,Mike,Johnson,+1-555-0102,192.168.1.102,StartupXYZ,CEO,https://linkedin.com/in/mikejohnson,,"Austin, TX"
+sarah.williams@example.com,Sarah,Williams,+1-555-0103,192.168.1.103,Enterprise Corp,Marketing Director,https://linkedin.com/in/sarahwilliams,https://facebook.com/sarahw,"Chicago, IL"
+david.brown@example.com,David,Brown,+1-555-0104,192.168.1.104,CloudServices Co,DevOps Engineer,https://linkedin.com/in/davidbrown,,"Seattle, WA"

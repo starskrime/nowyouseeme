@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module">
+    <h2>Upload Enrichment Data from CSV</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-row">
+            <div>
+                <label for="site">Select Site:</label>
+                <select name="site" id="site" required>
+                    <option value="">---------</option>
+                    {% for site in sites %}
+                    <option value="{{ site.id }}">{{ site.name }} ({{ site.domain }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div>
+                <label for="csv_file">CSV File:</label>
+                <input type="file" name="csv_file" id="csv_file" accept=".csv" required>
+            </div>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Upload CSV" class="default">
+            <a href="{% url 'admin:tracking_enrichmentdata_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+
+    <div class="help" style="margin-top: 20px;">
+        <h3>CSV Format</h3>
+        <p>The CSV file should contain the following columns (all optional except <strong>email</strong>):</p>
+        <ul>
+            <li><strong>email</strong> (required) - Email address</li>
+            <li>first_name or firstname - First name</li>
+            <li>last_name or lastname - Last name</li>
+            <li>phone or phone_number - Phone number</li>
+            <li>ip_address or ip - IP address (can be comma-separated for multiple IPs)</li>
+            <li>linkedin_url or linkedin - LinkedIn profile URL</li>
+            <li>facebook_url or facebook - Facebook profile URL</li>
+            <li>twitter_url or twitter - Twitter profile URL</li>
+            <li>company - Company name</li>
+            <li>job_title or title - Job title</li>
+            <li>location - Location</li>
+        </ul>
+
+        <h4>Example CSV:</h4>
+        <pre style="background: #f8f8f8; padding: 10px; border: 1px solid #ddd;">
+email,first_name,last_name,phone,ip_address,company,job_title,linkedin_url
+john@example.com,John,Doe,+1234567890,192.168.1.1,Acme Inc,CEO,https://linkedin.com/in/johndoe
+jane@example.com,Jane,Smith,+0987654321,10.0.0.1,Tech Corp,CTO,https://linkedin.com/in/janesmith
+        </pre>
+
+        <p><strong>Note:</strong> If an email already exists for the selected site, the record will be updated with new data.</p>
+    </div>
+</div>
+{% endblock %}
