@@ -4,6 +4,17 @@ A Django-based visitor tracking and analytics platform with advanced identity re
 
 ---
 
+<img width="2152" height="1155" alt="image" src="https://github.com/user-attachments/assets/797d2596-66b6-44b6-8fc0-08d3c8bcbc1b" />
+
+
+<img width="2152" height="1127" alt="image" src="https://github.com/user-attachments/assets/ef5ce02c-5434-4262-932b-58926b4711f3" />
+
+
+<img width="2152" height="1100" alt="image" src="https://github.com/user-attachments/assets/75031344-33df-41d6-b003-4df2c37180f6" />
+
+
+
+
 ## Table of Contents
 
 - [Features](#features)
