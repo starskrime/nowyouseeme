@@ -207,7 +207,7 @@
 
             {% if has_site %}
             // Track the event
-            RetentionTracker.trackCartAdd({
+            NowYouSeeMeTracker.trackCartAdd({
                 product_id: productId,
                 product_name: productName,
                 price: price
@@ -247,7 +247,7 @@
 
                 {% if has_site %}
                 // Track cart view
-                RetentionTracker.trackCartView(cart);
+                NowYouSeeMeTracker.trackCartView(cart);
                 {% endif %}
             } else {
                 checkoutBtn.disabled = true;
@@ -266,14 +266,14 @@
             {% if has_site %}
             // This is the KEY part - identity resolution!
             // When user submits their email, we identify them
-            RetentionTracker.identify(email, {
+            NowYouSeeMeTracker.identify(email, {
                 name: name,
                 phone: phone || null,
                 source: 'newsletter_subscription'
             });
 
             // Also track the form submission event
-            RetentionTracker.trackFormSubmit('newsletter', {
+            NowYouSeeMeTracker.trackFormSubmit('newsletter', {
                 email: email,
                 name: name,
                 phone: phone
@@ -296,7 +296,7 @@
 
             {% if has_site %}
             // Track checkout start
-            RetentionTracker.trackCheckoutStart({
+            NowYouSeeMeTracker.trackCheckoutStart({
                 items: cart,
                 total: cartTotal,
                 item_count: cart.length
@@ -308,7 +308,7 @@
 
             {% if has_site %}
             // Track purchase
-            RetentionTracker.trackPurchase({
+            NowYouSeeMeTracker.trackPurchase({
                 order_id: orderId,
                 total: cartTotal,
                 currency: 'USD',
@@ -327,9 +327,9 @@
 
         // Initialize
         {% if has_site %}
-        console.log('Demo shop loaded. RetentionTracker is ready!');
-        console.log('Visitor ID:', RetentionTracker.getVisitorId());
-        console.log('Session ID:', RetentionTracker.getSessionId());
+        console.log('Demo shop loaded. NowYouSeeMeTracker is ready!');
+        console.log('Visitor ID:', NowYouSeeMeTracker.getVisitorId());
+        console.log('Session ID:', NowYouSeeMeTracker.getSessionId());
         console.log('Site Key:', '{{ site_key }}');
         {% else %}
         console.log('Demo shop loaded. Tracking is disabled (no site configured).');

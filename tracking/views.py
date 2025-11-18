@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -126,6 +127,37 @@ def track_event(request):
 
                 # If matched, create contact and mark visitor as identified
                 if enrichment:
+                    # Collect all visitor information for comprehensive contact data
+                    visitor_info = {
+                        # Browser fingerprint data
+                        'browser_fingerprint': {
+                            'browser_name': visitor.browser_name,
+                            'browser_version': visitor.browser_version,
+                            'os_name': visitor.os_name,
+                            'device_type': visitor.device_type,
+                            'screen_resolution': visitor.screen_resolution,
+                            'timezone': visitor.timezone,
+                            'language': visitor.language,
+                        },
+                        # Tracking data
+                        'ip_address': visitor.ip_address,
+                        'user_agent': visitor.user_agent,
+                        'referrer': visitor.referrer,
+                        # UTM attribution data (first-touch)
+                        'utm_data': {
+                            'utm_source': visitor.utm_source,
+                            'utm_medium': visitor.utm_medium,
+                            'utm_campaign': visitor.utm_campaign,
+                            'utm_term': visitor.utm_term,
+                            'utm_content': visitor.utm_content,
+                        },
+                        # Identification metadata
+                        'matched_via': matched_via,
+                        'match_details': match_details,
+                        'first_seen': visitor.first_seen.isoformat() if visitor.first_seen else None,
+                        'identified_at': timezone.now().isoformat(),
+                    }
+
                     contact, contact_created = Contact.objects.get_or_create(
                         site=site,
                         email=enrichment.email,
@@ -140,15 +172,18 @@ def track_event(request):
                                 'company': enrichment.company,
                                 'job_title': enrichment.job_title,
                                 'location': enrichment.location,
-                                'matched_via': matched_via,
-                                'match_details': match_details,
+                                **visitor_info,  # Include all visitor information
                             }
                         }
                     )
 
-                    # If contact exists but linked to different visitor, update it
+                    # If contact exists but linked to different visitor, update it with new visitor data
                     if not contact_created and contact.visitor != visitor:
                         contact.visitor = visitor
+                        # Update extra_data with new visitor information
+                        if not contact.extra_data:
+                            contact.extra_data = {}
+                        contact.extra_data.update(visitor_info)
                         contact.save()
 
                     # Mark visitor as identified - ONLY SET ONCE

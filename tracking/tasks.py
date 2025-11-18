@@ -27,12 +27,46 @@ def process_identity_resolution_sync(visitor_id, identity_data):
         except EnrichmentData.DoesNotExist:
             pass
 
+        # Collect all visitor information for comprehensive contact data
+        from django.utils import timezone
+        visitor_info = {
+            # Browser fingerprint data
+            'browser_fingerprint': {
+                'browser_name': visitor.browser_name,
+                'browser_version': visitor.browser_version,
+                'os_name': visitor.os_name,
+                'device_type': visitor.device_type,
+                'screen_resolution': visitor.screen_resolution,
+                'timezone': visitor.timezone,
+                'language': visitor.language,
+            },
+            # Tracking data
+            'ip_address': visitor.ip_address,
+            'user_agent': visitor.user_agent,
+            'referrer': visitor.referrer,
+            # UTM attribution data (first-touch)
+            'utm_data': {
+                'utm_source': visitor.utm_source,
+                'utm_medium': visitor.utm_medium,
+                'utm_campaign': visitor.utm_campaign,
+                'utm_term': visitor.utm_term,
+                'utm_content': visitor.utm_content,
+            },
+            # Identification metadata
+            'matched_via': 'email',
+            'first_seen': visitor.first_seen.isoformat() if visitor.first_seen else None,
+            'identified_at': timezone.now().isoformat(),
+        }
+
         # Prepare contact defaults
         defaults = {
             'visitor': visitor,
             'name': identity_data.get('name', ''),
             'phone': identity_data.get('phone', ''),
-            'extra_data': {k: v for k, v in identity_data.items() if k not in ['email', 'name', 'phone']}
+            'extra_data': {
+                **{k: v for k, v in identity_data.items() if k not in ['email', 'name', 'phone']},
+                **visitor_info,  # Include all visitor information
+            }
         }
 
         # If we have enrichment data, use it to populate contact fields
@@ -74,6 +108,11 @@ def process_identity_resolution_sync(visitor_id, identity_data):
                 contact.linkedin_url = enrichment.linkedin_url
                 contact.facebook_url = enrichment.facebook_url
                 updated = True
+            # Update extra_data with latest visitor information
+            if not contact.extra_data:
+                contact.extra_data = {}
+            contact.extra_data.update(visitor_info)
+            updated = True
             if updated:
                 contact.save()
         except Contact.DoesNotExist:
@@ -107,6 +146,10 @@ def process_identity_resolution_sync(visitor_id, identity_data):
                 if k not in ['email', 'name', 'phone'] and v:
                     contact.extra_data[k] = v
                     updated = True
+
+            # Update visitor information
+            contact.extra_data.update(visitor_info)
+            updated = True
 
             if updated:
                 contact.save()
